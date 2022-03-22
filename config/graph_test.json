@@ -1,0 +1,52 @@
+{
+    "name": "test_graph",
+    "nodes": [
+        {
+            "name": "InputNode1",
+            "depends": [],
+            "emitters": [
+                {
+                    "data": "A"
+                }
+            ],
+            "typeName": "InputOp"
+        },
+        {
+            "name": "InputNode2",
+            "depends": [],
+            "emitters": [
+                {
+                    "data": "B"
+                }
+            ],
+            "typeName": "InputOp"
+        },
+        {
+            "name": "AddNode",
+            "depends": [
+                {
+                    "data": "A"
+                },
+                {
+                    "data": "B"
+                }
+            ],
+            "emitters": [
+                {
+                    "data": "C"
+                }
+            ],
+            "typeName": "AddOp"
+        },
+        {
+            "name": "OutputNode",
+            "depends": [
+                {
+                    "data": "C"
+                }
+            ],
+            "emitters": [],
+            "typeName": "OutputOp"
+        }
+    ]
+}
