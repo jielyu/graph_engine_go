@@ -1,3 +1,3 @@
 module github.com/jielyu/graph_engine_go
 
-go 1.15
+go 1.18

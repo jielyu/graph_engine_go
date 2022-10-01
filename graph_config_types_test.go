@@ -1,15 +1,14 @@
-package types_test
+package graph_engine
 
 import "testing"
 import "fmt"
 import "encoding/json"
-import "github.com/jielyu/graph_engine_go/types"
 
 func TestGraphConfig(t *testing.T) {
 	fmt.Println("Testing for Graph Config")
 	// 从文件中读取json
-	var jsonPath string = "../config/graph_test.json"
-	graphConfig, err := types.LoadGraphConfig(jsonPath)
+	var jsonPath string = "./config/test/graph_test.json"
+	graphConfig, err := LoadGraphConfig(jsonPath)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to load graph config, err:%v", err))
 	}

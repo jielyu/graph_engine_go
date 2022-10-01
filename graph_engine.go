@@ -1,1 +1,3 @@
-package github.com/jielyu/graph_engine_go
+package graph_engine
+
+type GraphEngine struct{}

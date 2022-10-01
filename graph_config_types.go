@@ -1,4 +1,4 @@
-package types
+package graph_engine
 
 import (
 	"encoding/json"
