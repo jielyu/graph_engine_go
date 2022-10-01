@@ -1,4 +1,4 @@
-package graph_engine
+package graph_engine_go
 
 import "testing"
 import "fmt"

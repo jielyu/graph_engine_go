@@ -1,5 +1,5 @@
 // 用于注册算子，并提供创建对象的接口
-package graph_engine
+package graph_engine_go
 
 import "fmt"
 

@@ -1,4 +1,4 @@
-package graph_engine
+package graph_engine_go
 
 /***
 用于管理节点发布的数据
