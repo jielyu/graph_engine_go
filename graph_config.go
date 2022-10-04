@@ -36,18 +36,18 @@ func LoadGraphConfig(configJson string) (*GraphConfig, error) {
 	// 打开并读取json文件
 	jsonFile, err := os.Open(configJson)
 	if err != nil {
-		return nil, fmt.Errorf("Failed_to_parse_json_file:%s", configJson)
+		return nil, fmt.Errorf("failed to parse json file:%s", configJson)
 	}
 	defer jsonFile.Close()
 	byteValues, err := ioutil.ReadAll(jsonFile)
 	if err != nil {
-		return nil, fmt.Errorf("Failed_to_read_data_from_json_file:%s", configJson)
+		return nil, fmt.Errorf("failed to read data from json file:%s", configJson)
 	}
 	// 解析json数据
 	var graphConfig GraphConfig
 	err = json.Unmarshal(byteValues, &graphConfig)
 	if err != nil {
-		return nil, fmt.Errorf("Failed_to_parse_json:%s", configJson)
+		return nil, fmt.Errorf("failed to parse json:%s", configJson)
 	}
 	return &graphConfig, nil
 }

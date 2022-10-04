@@ -9,6 +9,11 @@ type GraphOpTest struct {
 	Name string
 }
 
+func (g *GraphOpTest) SetConfig(config *GraphNodeConfig) error {
+
+	return nil
+}
+
 func (g *GraphOpTest) SetUp(ctx *GraphContext) error {
 	return nil
 }

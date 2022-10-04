@@ -4,6 +4,7 @@ go 1.18
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
+	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect
 	github.com/urfave/cli/v2 v2.17.1 // indirect
