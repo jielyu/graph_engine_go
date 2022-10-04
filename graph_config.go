@@ -7,6 +7,7 @@ import (
 	"os"
 )
 
+// 节点配置
 type GraphNodeConfig struct {
 	Name     string            `json:"name"`
 	NodeType string            `json:"type"`
@@ -15,6 +16,7 @@ type GraphNodeConfig struct {
 	Config   map[string]string `json:"config"`
 }
 
+// 整图结构的配置
 type GraphConfig struct {
 	Name       string            `json:"name"`
 	TypeName   string            `json:"type"`
