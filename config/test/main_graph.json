@@ -2,6 +2,8 @@
     "name": "Main",
     "type": "MainGraph",
     "include": [],
+    "pool_size": 3,
+    "num_threads": 4,
     "nodes": [
         {
             "name": "node_1",
@@ -11,8 +13,8 @@
                 "B": "b"
             },
             "config": {
-                "A": 1,
-                "B": 2
+                "A": "1",
+                "B": "2"
             }
         },
         {
@@ -23,8 +25,8 @@
                 "B": "d"
             },
             "config": {
-                "A": 3,
-                "B": 4
+                "A": "3",
+                "B": "4"
             }
         },
         {
