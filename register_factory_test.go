@@ -38,7 +38,7 @@ func init() {
 }
 
 func TestCreateNode(t *testing.T) {
-	obj := CreateInstance("GraphOpTest")
+	obj, _ := CreateInstance("GraphOpTest")
 	var ctx GraphContext
 	obj.Process(&ctx)
 }

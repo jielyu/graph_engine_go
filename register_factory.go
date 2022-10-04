@@ -4,23 +4,21 @@ package graph_engine_go
 import "fmt"
 
 var (
-	factory_registry = make(map[string]func() GraphOperator)
+	factoryRegistry = make(map[string]func() GraphOperator)
 )
 
 func RegisterClass(name string, fac_func func() GraphOperator) {
-	factory_registry[name] = fac_func
+	factoryRegistry[name] = fac_func
 }
 
-func CreateInstance(name string) GraphOperator {
-	defer func() {
-		if err := recover(); err != nil {
-			fmt.Println(err)
-		}
-	}()
-	if f, ok := factory_registry[name]; ok {
-		return f()
-	} else {
-		info_str := fmt.Sprintf("not found Class[%s]", name)
-		panic(info_str)
+func CreateInstance(name string) (GraphOperator, error) {
+	// defer func() {
+	// 	if err := recover(); err != nil {
+	// 		fmt.Println(err)
+	// 	}
+	// }()
+	if f, ok := factoryRegistry[name]; ok {
+		return f(), nil
 	}
+	return nil, fmt.Errorf("not found Class[%s]", name)
 }

@@ -29,7 +29,10 @@ func (ctx *GraphContext) BuildGraph(graphConfig *GraphConfig) error {
 		nodeName := nodeconfig.Name
 		typeName := nodeconfig.NodeType
 		// 创建对象
-		node := CreateInstance(typeName)
+		node, err := CreateInstance(typeName)
+		if err != nil {
+			return err
+		}
 		// 设置节点配置
 		node.SetConfig(&nodeconfig)
 		// 记录节点
