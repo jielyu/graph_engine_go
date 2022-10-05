@@ -27,18 +27,16 @@ func (g *GraphOpTest) Process(ctx *GraphContext) error {
 	return nil
 }
 
-func newGraphOpTest() GraphOperator {
-	op := new(GraphOpTest)
-	op.Name = "Hello"
-	return op
-}
-
 func init() {
-	RegisterClass("GraphOpTest", newGraphOpTest)
+	Register[GraphOpTest]()
 }
 
 func TestCreateNode(t *testing.T) {
 	obj, _ := CreateInstance("GraphOpTest")
+	obj2, _ := CreateInstance("GraphOpTest")
+	obj.(*GraphOpTest).Name = "hello"
+	obj2.(*GraphOpTest).Name = "world"
 	var ctx GraphContext
 	obj.Process(&ctx)
+	obj2.Process(&ctx)
 }
