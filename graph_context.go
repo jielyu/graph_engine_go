@@ -106,7 +106,7 @@ func (ctx *GraphContext) Process() error {
 		// 运行准备就绪的节点
 		for _, name := range readyNode {
 			go func(nname string) {
-				fmt.Println("process node ", nname)
+				// fmt.Println("process node ", nname)
 				op := ctx.graphNodes[nname]
 				op.Process(ctx)
 				for v := range ctx.nodeEmitMap[nname].Iter() {

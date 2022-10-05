@@ -3,6 +3,7 @@ package graph_engine_go
 import (
 	"fmt"
 	"testing"
+	// "time"
 )
 
 type TwoNumbersGeneratorOp struct {
@@ -90,6 +91,7 @@ func (g *PrinterOp) Initailize(ctx *GraphContext) error {
 
 func (g *PrinterOp) Process(ctx *GraphContext) error {
 	a := Dep[int](g.a)
+	// time.Sleep(time.Duration(2) * time.Microsecond)
 	fmt.Printf("result=%d\r\n", *a)
 	return nil
 }
