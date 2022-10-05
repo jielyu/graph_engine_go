@@ -2,6 +2,9 @@ package graph_engine_go
 
 import (
 	"fmt"
+	"sync/atomic"
+	"time"
+
 	mapset "github.com/deckarep/golang-set"
 )
 
@@ -86,32 +89,36 @@ func (ctx *GraphContext) Build(graphConfig *GraphConfig) error {
 // 运行图结构
 func (ctx *GraphContext) Process() error {
 	// 记录节点依赖情况
-	nodeState := make(map[string]int)
+	nodeState := make(map[string]*int32)
 	for _, name := range ctx.allNodes {
-		nodeState[name] = ctx.nodeDepMap[name].Cardinality()
+		var stat int32 = int32(ctx.nodeDepMap[name].Cardinality())
+		nodeState[name] = &stat
 	}
 	readyNode := make([]string, 0, len(nodeState))
 	for len(nodeState) > 0 {
 		// 查找准备就绪的节点
 		for k, v := range nodeState {
-			if v == 0 {
+			if *v == 0 {
 				delete(nodeState, k)
 				readyNode = append(readyNode, k)
 			}
 		}
 		// 运行准备就绪的节点
 		for _, name := range readyNode {
-			fmt.Println("process node ", name)
-			op := ctx.graphNodes[name]
-			op.Process(ctx)
-			for v := range ctx.nodeEmitMap[name].Iter() {
-				emitName := v.(string)
-				for _, nodeName := range ctx.dataForNodeMap[emitName] {
-					nodeState[nodeName] -= 1
+			go func(nname string) {
+				fmt.Println("process node ", nname)
+				op := ctx.graphNodes[nname]
+				op.Process(ctx)
+				for v := range ctx.nodeEmitMap[nname].Iter() {
+					emitName := v.(string)
+					for _, nodeName := range ctx.dataForNodeMap[emitName] {
+						atomic.AddInt32(nodeState[nodeName], -1)
+					}
 				}
-			}
+			}(name)
 		}
 		readyNode = readyNode[:0]
+		time.Sleep(time.Duration(1) * time.Microsecond)
 	}
 	return nil
 }

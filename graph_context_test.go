@@ -90,7 +90,7 @@ func (g *PrinterOp) Initailize(ctx *GraphContext) error {
 
 func (g *PrinterOp) Process(ctx *GraphContext) error {
 	a := Dep[int](g.a)
-	fmt.Printf("result=%d", *a)
+	fmt.Printf("result=%d\r\n", *a)
 	return nil
 }
 
