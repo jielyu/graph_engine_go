@@ -10,7 +10,6 @@ import (
 type GraphEngine struct {
 	graphConfig *GraphConfig
 	contextPool []*GraphContext // 运行池
-	poolFlag    []int32         // 标志位
 }
 
 func NewGraphEngine(jsonFile string) *GraphEngine {
@@ -24,40 +23,42 @@ func NewGraphEngine(jsonFile string) *GraphEngine {
 		ge.graphConfig.PoolSize = 1
 	}
 	ge.contextPool = make([]*GraphContext, 0, ge.graphConfig.PoolSize)
-	ge.poolFlag = make([]int32, 0, ge.graphConfig.PoolSize)
 	for i := 0; i < ge.graphConfig.PoolSize; i++ {
 		ctx := NewGraphContext()
+		ctx.Id = i
+		ctx.Busy = false
 		ctx.Build(ge.graphConfig)
 		ge.contextPool = append(ge.contextPool, ctx)
-		var busy int32 = 0
-		ge.poolFlag = append(ge.poolFlag, busy)
 	}
 	return ge
 }
 
 var selectLocker sync.Mutex
 
-func (ge *GraphEngine) selectIdleCtx() int {
+func (ge *GraphEngine) selectIdleCtx() *GraphContext {
 	selectLocker.Lock()
 	defer selectLocker.Unlock()
-	for idx, v := range ge.poolFlag {
-		if v == 0 {
-			ge.poolFlag[idx] = 1
-			return idx
+	for _, v := range ge.contextPool {
+		if !v.Busy {
+			v.Busy = true
+			return v
 		}
 	}
-	return -1
+	return nil
 }
 
-func (ge *GraphEngine) Process() error {
-	ctxIdx := ge.selectIdleCtx()
-	for ctxIdx == -1 {
+func (ge *GraphEngine) Process(inputData interface{}) (interface{}, error) {
+	ctx := ge.selectIdleCtx()
+	for ctx == nil {
 		time.Sleep(time.Duration(1) * time.Microsecond)
-		ctxIdx = ge.selectIdleCtx()
-		// fmt.Printf("ctxIdx:%d", ctxIdx)
+		ctx = ge.selectIdleCtx()
 	}
-	fmt.Println("select pool ", ctxIdx, " to process")
-	ge.contextPool[ctxIdx].Process()
-	ge.poolFlag[ctxIdx] = 0
-	return nil
+	// 清楚busy标志
+	defer func() {
+		ctx.Busy = false
+	}()
+	fmt.Println("select pool ", ctx.Id, " to process")
+	ctx.InputData = inputData
+	err := ctx.Process()
+	return ctx.OutputData, err
 }

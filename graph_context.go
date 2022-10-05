@@ -21,6 +21,10 @@ type GraphContext struct {
 	allGraphDep    map[string]*GraphDep     // 存储所有依赖的数据结构
 	dataByNodeMap  map[string]string        // 用于存储发布数据与发布节点之间的映射
 	dataForNodeMap map[string][]string      // 用于存储发布的数据与依赖该数据的节点之间的映射
+	InputData      interface{}
+	OutputData     interface{}
+	Busy           bool
+	Id             int
 }
 
 // 创建GraphContext对象

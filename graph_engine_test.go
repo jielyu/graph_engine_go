@@ -13,7 +13,8 @@ func TestGraphEngine(t *testing.T) {
 	wg.Add(times)
 	for i := 0; i < times; i++ {
 		go func() {
-			ge.Process()
+			var v interface{}
+			ge.Process(v)
 			wg.Done()
 		}()
 	}
