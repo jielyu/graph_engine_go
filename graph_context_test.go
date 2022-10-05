@@ -1,17 +1,25 @@
 package graph_engine_go
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 type TwoNumbersGeneratorOp struct {
 	Config *GraphNodeConfig
+	a      *GraphData
+	b      *GraphData
 }
 
 func (g *TwoNumbersGeneratorOp) SetConfig(config *GraphNodeConfig) error {
-
+	g.Config = config
 	return nil
 }
 
 func (g *TwoNumbersGeneratorOp) SetUp(ctx *GraphContext) error {
+	g.a = GetGraphDataByName(ctx, g.Config, "A")
+	g.b = GetGraphDataByName(ctx, g.Config, "B")
+	fmt.Printf("input: setup '%s' node '%s' succ.%p\r\n", g.Config.NodeType, g.Config.Name, g.Config)
 	return nil
 }
 
@@ -25,14 +33,21 @@ func (g *TwoNumbersGeneratorOp) Process(ctx *GraphContext) error {
 
 type AddOp struct {
 	Config *GraphNodeConfig
+	a      *GraphDep
+	b      *GraphDep
+	c      *GraphData
 }
 
 func (g *AddOp) SetConfig(config *GraphNodeConfig) error {
-
+	g.Config = config
 	return nil
 }
 
 func (g *AddOp) SetUp(ctx *GraphContext) error {
+	g.a = GetGraphDependByName(ctx, g.Config, "A")
+	g.b = GetGraphDependByName(ctx, g.Config, "B")
+	g.c = GetGraphDataByName(ctx, g.Config, "C")
+	fmt.Printf("compute: setup '%s' node '%s' succ.%p\r\n", g.Config.NodeType, g.Config.Name, g.Config)
 	return nil
 }
 
@@ -46,18 +61,22 @@ func (g *AddOp) Process(ctx *GraphContext) error {
 
 type PrinterOp struct {
 	Config *GraphNodeConfig
+	a      *GraphDep
 }
 
 func (g *PrinterOp) SetConfig(config *GraphNodeConfig) error {
-
+	g.Config = config
 	return nil
 }
 
 func (g *PrinterOp) SetUp(ctx *GraphContext) error {
+	g.a = GetGraphDependByName(ctx, g.Config, "A")
+	fmt.Printf("output: setup '%s' node '%s' succ.%p\r\n", g.Config.NodeType, g.Config.Name, g.Config)
 	return nil
 }
 
 func (g *PrinterOp) Initailize(ctx *GraphContext) error {
+
 	return nil
 }
 
@@ -78,5 +97,5 @@ func TestGraphContextBuildGraph(t *testing.T) {
 		panic((err.Error()))
 	}
 	var ctx = NewGraphContext()
-	ctx.BuildGraph(graphConfig)
+	ctx.Build(graphConfig)
 }
