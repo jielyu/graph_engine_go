@@ -8,6 +8,8 @@ import (
 type GraphContext struct {
 	graphConfig    *GraphConfig
 	graphNodes     map[string]GraphOperator // 存储所有节点对象
+	nodeEmitMap    map[string]mapset.Set    // 存储每个节点发布的数据名字
+	nodeDepMap     map[string]mapset.Set    // 存储每个节点依赖数据的名字
 	inputNodes     []string                 // 存储所有需要运行的输入节点的名字
 	computeNodes   []string                 // 存储所有需要运行的计算节点的名字
 	outputNodes    []string                 // 存储所有需要运行的输出节点名字
@@ -81,6 +83,39 @@ func (ctx *GraphContext) Build(graphConfig *GraphConfig) error {
 	return nil
 }
 
+// 运行图结构
+func (ctx *GraphContext) Process() error {
+	// 记录节点依赖情况
+	nodeState := make(map[string]int)
+	for _, name := range ctx.allNodes {
+		nodeState[name] = ctx.nodeDepMap[name].Cardinality()
+	}
+	readyNode := make([]string, 0, len(nodeState))
+	for len(nodeState) > 0 {
+		// 查找准备就绪的节点
+		for k, v := range nodeState {
+			if v == 0 {
+				delete(nodeState, k)
+				readyNode = append(readyNode, k)
+			}
+		}
+		// 运行准备就绪的节点
+		for _, name := range readyNode {
+			fmt.Println("process node ", name)
+			op := ctx.graphNodes[name]
+			op.Process(ctx)
+			for v := range ctx.nodeEmitMap[name].Iter() {
+				emitName := v.(string)
+				for _, nodeName := range ctx.dataForNodeMap[emitName] {
+					nodeState[nodeName] -= 1
+				}
+			}
+		}
+		readyNode = readyNode[:0]
+	}
+	return nil
+}
+
 // 构建各个节点
 func (ctx *GraphContext) create(graphConfig *GraphConfig) error {
 	ctx.graphConfig = graphConfig
@@ -138,6 +173,8 @@ func (ctx *GraphContext) create(graphConfig *GraphConfig) error {
 			ctx.computeNodes = append(ctx.computeNodes, nodeName)
 		}
 	}
+	ctx.nodeEmitMap = nodeEmitMap
+	ctx.nodeDepMap = nodeDepMap
 	fmt.Printf("num_inputs:%d, num_compute:%d, num_output:%d\r\n",
 		len(ctx.inputNodes), len(ctx.computeNodes), len(ctx.outputNodes))
 	// 找出所有对输出有贡献的节点
@@ -207,11 +244,5 @@ func (ctx *GraphContext) initailize() error {
 			return err
 		}
 	}
-	return nil
-}
-
-// 运行图结构
-func (ctx *GraphContext) Process(graphConfig *GraphConfig) error {
-
 	return nil
 }

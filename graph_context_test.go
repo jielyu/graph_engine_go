@@ -28,6 +28,10 @@ func (g *TwoNumbersGeneratorOp) Initailize(ctx *GraphContext) error {
 }
 
 func (g *TwoNumbersGeneratorOp) Process(ctx *GraphContext) error {
+	a := Emit[int](g.a)
+	b := Emit[int](g.b)
+	*a = 2
+	*b = 3
 	return nil
 }
 
@@ -56,6 +60,10 @@ func (g *AddOp) Initailize(ctx *GraphContext) error {
 }
 
 func (g *AddOp) Process(ctx *GraphContext) error {
+	a := Dep[int](g.a)
+	b := Dep[int](g.b)
+	c := Emit[int](g.c)
+	*c = *a + *b
 	return nil
 }
 
@@ -81,6 +89,8 @@ func (g *PrinterOp) Initailize(ctx *GraphContext) error {
 }
 
 func (g *PrinterOp) Process(ctx *GraphContext) error {
+	a := Dep[int](g.a)
+	fmt.Printf("result=%d", *a)
 	return nil
 }
 
@@ -98,4 +108,5 @@ func TestGraphContextBuildGraph(t *testing.T) {
 	}
 	var ctx = NewGraphContext()
 	ctx.Build(graphConfig)
+	ctx.Process()
 }
