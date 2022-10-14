@@ -16,11 +16,9 @@ type GraphData struct {
 }
 
 func Emit[T any](gdata *GraphData) *T {
-	// 无法直接从类型获取类型名，只能先创建一个临时对象，再用反射机制
-	// 后续有更好的方式再优化
-	var tmp T
-	typeOfT := reflect.TypeOf(tmp)
-	typeTName := typeOfT.Name()
+	// 获取类型名，nil不会占用存储空间，避免内存碎片化
+	t := reflect.TypeOf((*T)(nil)).Elem()
+	typeTName := t.Name()
 	if gdata.Data == nil {
 		var d *T = new(T)
 		gdata.TypeName = typeTName
@@ -47,9 +45,8 @@ type GraphDep struct {
 }
 
 func Dep[T any](gdep *GraphDep) *T {
-	var tmp T
-	typeOfT := reflect.TypeOf(tmp)
-	typeTName := typeOfT.Name()
+	t := reflect.TypeOf((*T)(nil)).Elem()
+	typeTName := t.Name()
 	if typeTName != gdep.RefGraphData.TypeName {
 		panic(fmt.Errorf("depend type '%s' different from emitter type '%s'",
 			typeTName, gdep.RefGraphData.TypeName))

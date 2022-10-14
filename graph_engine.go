@@ -3,15 +3,15 @@ package graph_engine_go
 import (
 	"fmt"
 	"sync"
-	// "sync/atomic"
 	"time"
 )
 
 type GraphEngine struct {
-	graphConfig *GraphConfig
+	graphConfig *GraphConfig    // 图结构配置
 	contextPool []*GraphContext // 运行池
 }
 
+// 创建一个图引擎
 func NewGraphEngine(jsonFile string) *GraphEngine {
 	ge := new(GraphEngine)
 	graphConfig, err := LoadGraphConfig(jsonFile)
@@ -22,6 +22,7 @@ func NewGraphEngine(jsonFile string) *GraphEngine {
 	if ge.graphConfig.PoolSize < 0 {
 		ge.graphConfig.PoolSize = 1
 	}
+	// 创建上下文运行池
 	ge.contextPool = make([]*GraphContext, 0, ge.graphConfig.PoolSize)
 	for i := 0; i < ge.graphConfig.PoolSize; i++ {
 		ctx := NewGraphContext()
@@ -50,7 +51,11 @@ func (ge *GraphEngine) selectIdleCtx() *GraphContext {
 	return nil
 }
 
+// 用于执行一次处理任务
+// inputData可以在输入节点强制转换为对应结构
+// reqId用于标识每次处理，最好保证互异
 func (ge *GraphEngine) Process(inputData interface{}, reqId uint64) (interface{}, error) {
+	// 选择空闲的context，否则等待
 	ctx := ge.selectIdleCtx()
 	for ctx == nil {
 		time.Sleep(time.Duration(1) * time.Microsecond)
@@ -60,7 +65,7 @@ func (ge *GraphEngine) Process(inputData interface{}, reqId uint64) (interface{}
 	defer func() {
 		ctx.Busy = false
 	}()
-	fmt.Printf("select pool %d to process， addr:%p\r\n", ctx.Id, ctx)
+	fmt.Printf("[reqId:%d] select pool %d to process\r\n", reqId, ctx.Id)
 
 	ctx.InputData = inputData
 	ctx.ReqId = reqId

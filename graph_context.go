@@ -10,7 +10,7 @@ import (
 )
 
 type GraphContext struct {
-	graphConfig    *GraphConfig
+	graphConfig    *GraphConfig             // 图结构配置信息
 	graphNodes     map[string]GraphOperator // 存储所有节点对象
 	nodeEmitMap    map[string]mapset.Set    // 存储每个节点发布的数据名字
 	nodeDepMap     map[string]mapset.Set    // 存储每个节点依赖数据的名字
@@ -51,7 +51,7 @@ func (ctx *GraphContext) NameEmit(name string) *GraphData {
 	graphData.Name = name
 	graphData.Data = nil
 	ctx.allGraphData[name] = graphData
-	fmt.Printf("create GraphData '%s' succ\r\n", name)
+	// fmt.Printf("create GraphData '%s' succ\r\n", name)
 	return graphData
 }
 
@@ -100,8 +100,10 @@ func (ctx *GraphContext) Process() error {
 		var stat int32 = int32(ctx.nodeDepMap[name].Cardinality())
 		nodeState[name] = &stat
 	}
+	// 创建Group同步
 	var wg sync.WaitGroup
 	wg.Add(len(nodeState))
+	// 使用切片记录所有就绪的节点
 	readyNode := make([]string, 0, len(nodeState))
 	for len(nodeState) > 0 {
 		// 查找准备就绪的节点
@@ -117,6 +119,7 @@ func (ctx *GraphContext) Process() error {
 				// fmt.Println("process node ", nname)
 				op := ctx.graphNodes[nname]
 				op.Process(ctx)
+				// 更新所有依赖该节点的发布数据的节点状态
 				for v := range ctx.nodeEmitMap[nname].Iter() {
 					emitName := v.(string)
 					for _, nodeName := range ctx.dataForNodeMap[emitName] {
@@ -126,9 +129,12 @@ func (ctx *GraphContext) Process() error {
 				wg.Done()
 			}(name)
 		}
+		// 清空就绪列表
 		readyNode = readyNode[:0]
+		// 睡眠1ms，避免占用太多计算资源
 		time.Sleep(time.Duration(1) * time.Microsecond)
 	}
+	// 避免节点还没运行完就返回
 	wg.Wait()
 	return nil
 }
@@ -144,12 +150,11 @@ func (ctx *GraphContext) create(graphConfig *GraphConfig) error {
 		typeName := nodeconfig.NodeType
 		// 创建对象
 		node, err := CreateInstance(typeName)
-		fmt.Printf("create node %s, %s\r\n", typeName, nodeName)
 		if err != nil {
 			return err
 		}
 		// 设置节点配置
-		fmt.Println(nodeName, nodeconfig)
+		// fmt.Println(nodeName, nodeconfig)
 		var configCopy GraphNodeConfig = nodeconfig
 		node.SetConfig(&configCopy)
 		// 记录节点
@@ -220,7 +225,7 @@ func (ctx *GraphContext) create(graphConfig *GraphConfig) error {
 		}
 	}
 	ctx.allNodes = nodeFound
-	fmt.Printf("found nodes: %v\r\n", ctx.allNodes)
+	fmt.Printf("found valid nodes: %v\r\n", ctx.allNodes)
 	// 记录所有需要运行的节点
 	ctx.inputNodes = ctx.inputNodes[:0]
 	ctx.computeNodes = ctx.computeNodes[:0]
@@ -243,7 +248,7 @@ func (ctx *GraphContext) create(graphConfig *GraphConfig) error {
 // 调用每一个node的SetUp函数
 func (ctx *GraphContext) setup() error {
 	for _, name := range ctx.allNodes {
-		fmt.Printf("start to setup node '%s'\r\n", name)
+		// fmt.Printf("start to setup node '%s'\r\n", name)
 		err := ctx.graphNodes[name].SetUp(ctx)
 		if err != nil {
 			fmt.Printf("failed to setup node '%s'", name)

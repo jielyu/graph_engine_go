@@ -11,6 +11,7 @@ var (
 )
 
 // 注册一个类型
+// Deprecated，建议外部使用 Register 函数完成注册功能
 func RegisterClass(name string, fac_func func() GraphOperator) error {
 	if _, ok := factoryRegistry[name]; ok {
 		return fmt.Errorf("not allow duplicated struct name:%s", name)
@@ -22,9 +23,9 @@ func RegisterClass(name string, fac_func func() GraphOperator) error {
 
 // 使用范型和反射机制简化注册函数
 func Register[T any]() {
-	var tmp T
-	typeOfT := reflect.TypeOf(tmp)
-	err := RegisterClass(typeOfT.Name(), func() GraphOperator {
+	t := reflect.TypeOf((*T)(nil)).Elem()
+	typeTName := t.Name()
+	err := RegisterClass(typeTName, func() GraphOperator {
 		var node T
 		return any(&node).(GraphOperator)
 	})
@@ -35,11 +36,7 @@ func Register[T any]() {
 
 // 根据类型名字创建对象
 func CreateInstance(name string) (GraphOperator, error) {
-	// defer func() {
-	// 	if err := recover(); err != nil {
-	// 		fmt.Println(err)
-	// 	}
-	// }()
+	// 使用工厂方法创建节点对象
 	if f, ok := factoryRegistry[name]; ok {
 		return f(), nil
 	}
