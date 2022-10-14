@@ -30,7 +30,7 @@ func (g *PrinterOp) Initailize(ctx *ge.GraphContext) error {
 func (g *PrinterOp) Process(ctx *ge.GraphContext) error {
 	a := ge.Dep[int](g.a)
 	// time.Sleep(time.Duration(2) * time.Microsecond)
-	fmt.Printf("result=%d\r\n", *a)
+	fmt.Printf("req_id=%d, ctx.Id=%d, result=%d\r\n", ctx.ReqId, ctx.Id, *a)
 	return nil
 }
 

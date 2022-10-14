@@ -50,7 +50,7 @@ func (ge *GraphEngine) selectIdleCtx() *GraphContext {
 	return nil
 }
 
-func (ge *GraphEngine) Process(inputData interface{}) (interface{}, error) {
+func (ge *GraphEngine) Process(inputData interface{}, reqId uint64) (interface{}, error) {
 	ctx := ge.selectIdleCtx()
 	for ctx == nil {
 		time.Sleep(time.Duration(1) * time.Microsecond)
@@ -60,9 +60,11 @@ func (ge *GraphEngine) Process(inputData interface{}) (interface{}, error) {
 	defer func() {
 		ctx.Busy = false
 	}()
-	fmt.Println("select pool ", ctx.Id, " to process")
+	fmt.Printf("select pool %d to process， addr:%p\r\n", ctx.Id, ctx)
 
 	ctx.InputData = inputData
+	ctx.ReqId = reqId
 	err := ctx.Process()
+	// fmt.Printf("ctx %d run finished.addr:%p\r\n", ctx.Id, ctx)
 	return ctx.OutputData, err
 }

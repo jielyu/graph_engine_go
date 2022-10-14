@@ -14,7 +14,7 @@ func TestGraphEngine(t *testing.T) {
 	for i := 0; i < times; i++ {
 		go func() {
 			var v interface{}
-			ge.Process(v)
+			ge.Process(v, 0)
 			wg.Done()
 		}()
 	}

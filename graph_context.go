@@ -2,6 +2,7 @@ package graph_engine_go
 
 import (
 	"fmt"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -23,8 +24,9 @@ type GraphContext struct {
 	dataForNodeMap map[string][]string      // 用于存储发布的数据与依赖该数据的节点之间的映射
 	InputData      interface{}
 	OutputData     interface{}
-	Busy           bool
-	Id             int
+	Busy           bool   // ctx是否处于繁忙的标志
+	Id             int    // ctx在缓冲池中的Id
+	ReqId          uint64 // 每次请求尽量使用不同的ReqId，便于日志查询
 }
 
 // 创建GraphContext对象
@@ -98,6 +100,8 @@ func (ctx *GraphContext) Process() error {
 		var stat int32 = int32(ctx.nodeDepMap[name].Cardinality())
 		nodeState[name] = &stat
 	}
+	var wg sync.WaitGroup
+	wg.Add(len(nodeState))
 	readyNode := make([]string, 0, len(nodeState))
 	for len(nodeState) > 0 {
 		// 查找准备就绪的节点
@@ -119,11 +123,13 @@ func (ctx *GraphContext) Process() error {
 						atomic.AddInt32(nodeState[nodeName], -1)
 					}
 				}
+				wg.Done()
 			}(name)
 		}
 		readyNode = readyNode[:0]
 		time.Sleep(time.Duration(1) * time.Microsecond)
 	}
+	wg.Wait()
 	return nil
 }
 
