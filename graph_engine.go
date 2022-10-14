@@ -27,7 +27,10 @@ func NewGraphEngine(jsonFile string) *GraphEngine {
 		ctx := NewGraphContext()
 		ctx.Id = i
 		ctx.Busy = false
-		ctx.Build(ge.graphConfig)
+		err := ctx.Build(ge.graphConfig)
+		if err != nil {
+			panic(err)
+		}
 		ge.contextPool = append(ge.contextPool, ctx)
 	}
 	return ge
@@ -58,6 +61,7 @@ func (ge *GraphEngine) Process(inputData interface{}) (interface{}, error) {
 		ctx.Busy = false
 	}()
 	fmt.Println("select pool ", ctx.Id, " to process")
+
 	ctx.InputData = inputData
 	err := ctx.Process()
 	return ctx.OutputData, err

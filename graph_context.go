@@ -138,6 +138,7 @@ func (ctx *GraphContext) create(graphConfig *GraphConfig) error {
 		typeName := nodeconfig.NodeType
 		// 创建对象
 		node, err := CreateInstance(typeName)
+		fmt.Printf("create node %s, %s\r\n", typeName, nodeName)
 		if err != nil {
 			return err
 		}

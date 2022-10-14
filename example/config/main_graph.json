@@ -1,0 +1,73 @@
+{
+    "name": "Main",
+    "type": "MainGraph",
+    "include": [],
+    "pool_size": 3,
+    "num_threads": 4,
+    "nodes": [
+        {
+            "name": "node_1",
+            "type": "TwoNumbersGeneratorOp",
+            "emitters": {
+                "A": "a",
+                "B": "b"
+            },
+            "config": {
+                "A": "1",
+                "B": "2"
+            }
+        },
+        {
+            "name": "node_2",
+            "type": "TwoNumbersGeneratorOp",
+            "emitters": {
+                "A": "c",
+                "B": "d"
+            },
+            "config": {
+                "A": "3",
+                "B": "4"
+            }
+        },
+        {
+            "name": "node_3",
+            "type": "AddOp",
+            "depends": {
+                "A": "a",
+                "B": "c"
+            },
+            "emitters": {
+                "C": "e"
+            }
+        },
+        {
+            "name": "node_4",
+            "type": "AddOp",
+            "depends": {
+                "A": "b",
+                "B": "e"
+            },
+            "emitters": {
+                "C": "f"
+            }
+        },
+        {
+            "name": "node_5",
+            "type": "AddOp",
+            "depends": {
+                "A": "d",
+                "B": "f"
+            },
+            "emitters": {
+                "C": "g"
+            }
+        },
+        {
+            "name": "node_6",
+            "type": "PrinterOp",
+            "depends": {
+                "A": "g"
+            }
+        }
+    ]
+}
