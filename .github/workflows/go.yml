@@ -1,0 +1,25 @@
+name: GraphEngineGo-Example
+on:
+  push:
+    branches:
+      - "master"
+jobs:
+  build:
+    name: Build
+    runs-on: macos-12
+    defaults:
+      run:
+        shell: bash
+        working-directory: example
+    steps:
+      - name: Set up Go environment
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.18
+        id: go
+
+      - name: Checkout source code
+        uses: actions/checkout@v1
+
+      - name: Run example
+        run: go run main.go
