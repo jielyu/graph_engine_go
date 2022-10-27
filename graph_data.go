@@ -11,7 +11,6 @@ import (
 type GraphData struct {
 	Name     string
 	Active   bool
-	Mutable  bool
 	TypeName string
 	Data     interface{}
 }
@@ -39,7 +38,7 @@ func Emit[T any](gdata *GraphData) *T {
 // 模版不能用于类型方法，因此只能单独提供函数
 func EmitDep[T any](gdata *GraphData, gdep *GraphDep) *T {
 	// 必须声明为mutable才能原处修改
-	if !gdep.RefGraphData.Mutable {
+	if !gdep.Mutable {
 		panic(fmt.Errorf("not allow emit immutable GraphDep[%s]", gdep.Name))
 	}
 	gdata.TypeName = gdep.RefGraphData.TypeName
@@ -52,6 +51,7 @@ func EmitDep[T any](gdata *GraphData, gdep *GraphDep) *T {
 */
 type GraphDep struct {
 	Name         string
+	Mutable      bool
 	RefGraphData *GraphData
 }
 
@@ -66,5 +66,5 @@ func Dep[T any](gdep *GraphDep) *T {
 }
 
 func (gdep *GraphDep) SetMutable() {
-	gdep.RefGraphData.Mutable = true
+	gdep.Mutable = true
 }

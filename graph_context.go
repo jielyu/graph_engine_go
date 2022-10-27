@@ -323,10 +323,10 @@ func (ctx *GraphContext) setup() error {
 	}
 	// 检查mutable依赖是否唯一， 不唯一则报错
 	for dataName, nodeNames := range ctx.dataForNodeMap {
-		if ctx.allGraphData[dataName].Mutable {
+		if ctx.allGraphDep[dataName].Mutable {
 			if len(nodeNames) > 1 {
 				nodeNameStr := strings.Join(nodeNames[:], ",")
-				panic(fmt.Errorf("not allow >1 nodes depend mutable GraphData[%s] in Nodes %s", dataName, nodeNameStr))
+				panic(fmt.Errorf("not allow >1 nodes depend mutable GraphDep[%s] in Nodes %s", dataName, nodeNameStr))
 			}
 		}
 	}
