@@ -2,6 +2,7 @@ package graph_engine_go
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -253,8 +254,71 @@ func (ctx *GraphContext) setup() error {
 		// fmt.Printf("start to setup node '%s'\r\n", name)
 		err := ctx.graphNodes[name].SetUp(ctx)
 		if err != nil {
-			fmt.Printf("failed to setup node '%s'", name)
+			fmt.Printf("node[%s]:failed to run setup()", name)
 			return err
+		}
+		// 获取当前节点应该发布和依赖的数据
+		emitSet := mapset.NewSet()
+		depSet := mapset.NewSet()
+		for v := range ctx.nodeEmitMap[name].Iter() {
+			emitName := v.(string)
+			emitSet.Add(emitName)
+		}
+		for v := range ctx.nodeDepMap[name].Iter() {
+			depName := v.(string)
+			depSet.Add(depName)
+		}
+		// 检查节点发布数据是否足够
+		nodeType := reflect.TypeOf(ctx.graphNodes[name]).Elem()
+		nodeVal := reflect.ValueOf(ctx.graphNodes[name]).Elem()
+		for i := 0; i < nodeType.NumField(); i++ {
+			fieldType := nodeType.Field(i)
+			if fieldType.Type.Kind().String() == "ptr" {
+				elemName := fieldType.Type.Elem().Name()
+				if elemName == "GraphData" {
+					// 获取字段，并校验空指针
+					nodeField := nodeVal.Field(i)
+					if nodeField.IsNil() {
+						panic(fmt.Errorf("node[%s]:not allow to make nil GraphData[%s] in setup()", name, fieldType.Name))
+					}
+					// 获取发布数据的名字
+					emitName := nodeField.Elem().FieldByName("Name").String()
+					if emitSet.Contains(emitName) {
+						emitSet.Remove(emitName)
+					} else {
+						panic(fmt.Errorf("node[%s]:not allow to emit GraphData[%s] not found in config", name, emitName))
+					}
+				} else if elemName == "GraphDep" {
+					// 获取字段，并校验空指针
+					nodeField := nodeVal.Field(i)
+					if nodeField.IsNil() {
+						panic(fmt.Errorf("node[%s]:not allow to make nil GraphDep[%s] in setup()", name, fieldType.Name))
+					}
+					// 获取依赖数据的名字
+					depName := nodeField.Elem().FieldByName("Name").String()
+					if depSet.Contains(depName) {
+						depSet.Remove(depName)
+					} else {
+						panic(fmt.Errorf("node[%s]:not allow to depend GraphDep[%s] not found in config", name, depName))
+					}
+				}
+			}
+		}
+		// 检查发布数据是否发布完全
+		if emitSet.Cardinality() > 0 {
+			notEmitData := make([]string, 0, 4)
+			for v := range emitSet.Iter() {
+				notEmitData = append(notEmitData, v.(string))
+			}
+			panic(fmt.Errorf("node[%s]:not allow to miss GraphData[%s]", name, strings.Join(notEmitData[:], ",")))
+		}
+		// 检查依赖数据是否依赖完全
+		if depSet.Cardinality() > 0 {
+			notDepData := make([]string, 0, 4)
+			for v := range depSet.Iter() {
+				notDepData = append(notDepData, v.(string))
+				panic(fmt.Errorf("node[%s]:not allow to miss GraphDep[%s]", name, strings.Join(notDepData[:], ",")))
+			}
 		}
 	}
 	// 检查mutable依赖是否唯一， 不唯一则报错
@@ -266,6 +330,7 @@ func (ctx *GraphContext) setup() error {
 			}
 		}
 	}
+	fmt.Printf("setup all nodes successfully.\r\n")
 	return nil
 }
 
@@ -278,5 +343,6 @@ func (ctx *GraphContext) initailize() error {
 			return err
 		}
 	}
+	fmt.Printf("initialize all nodes successfully.\r\n")
 	return nil
 }

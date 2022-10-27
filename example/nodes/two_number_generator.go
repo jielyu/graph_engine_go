@@ -42,7 +42,7 @@ func (g *TwoNumbersGeneratorOp) Initailize(ctx *ge.GraphContext) error {
 	} else {
 		g.bVal = 3
 	}
-	fmt.Printf("node[%s], a=%d, b=%d", g.a.Name, g.aVal, g.bVal)
+	fmt.Printf("node[%s], a=%d, b=%d\r\n", g.Config.Name, g.aVal, g.bVal)
 	return nil
 }
 
