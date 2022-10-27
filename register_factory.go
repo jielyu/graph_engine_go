@@ -25,6 +25,9 @@ func RegisterClass(name string, fac_func func() GraphOperator) error {
 func Register[T any]() {
 	t := reflect.TypeOf((*T)(nil)).Elem()
 	typeTName := t.Name()
+	if len(typeTName) == 0 {
+		panic(fmt.Errorf("not allow unknown name type GraphOperator"))
+	}
 	err := RegisterClass(typeTName, func() GraphOperator {
 		var node T
 		return any(&node).(GraphOperator)

@@ -11,6 +11,7 @@ import (
 type GraphData struct {
 	Name     string
 	Active   bool
+	Mutable  bool
 	TypeName string
 	Data     interface{}
 }
@@ -20,6 +21,9 @@ func Emit[T any](gdata *GraphData) *T {
 	t := reflect.TypeOf((*T)(nil)).Elem()
 	typeTName := t.Name()
 	if gdata.Data == nil {
+		if len(typeTName) == 0 {
+			panic(fmt.Errorf("not allow unknown type GraphData"))
+		}
 		var d *T = new(T)
 		gdata.TypeName = typeTName
 		gdata.Data = d
@@ -31,7 +35,14 @@ func Emit[T any](gdata *GraphData) *T {
 	return (gdata.Data).(*T)
 }
 
+// 直接发布依赖的数据，用于inplace形式的修改，节省内存
+// 模版不能用于类型方法，因此只能单独提供函数
 func EmitDep[T any](gdata *GraphData, gdep *GraphDep) *T {
+	// 必须声明为mutable才能原处修改
+	if !gdep.RefGraphData.Mutable {
+		panic(fmt.Errorf("not allow emit immutable GraphDep[%s]", gdep.Name))
+	}
+	gdata.TypeName = gdep.RefGraphData.TypeName
 	gdata.Data = gdep.RefGraphData.Data
 	return gdata.Data.(*T)
 }
@@ -40,7 +51,7 @@ func EmitDep[T any](gdata *GraphData, gdep *GraphDep) *T {
 用于管理节点依赖的数据
 */
 type GraphDep struct {
-	Mutable      bool
+	Name         string
 	RefGraphData *GraphData
 }
 
@@ -54,6 +65,6 @@ func Dep[T any](gdep *GraphDep) *T {
 	return gdep.RefGraphData.Data.(*T)
 }
 
-func (gdep *GraphDep) SetMutable(m bool) {
-	gdep.Mutable = m
+func (gdep *GraphDep) SetMutable() {
+	gdep.RefGraphData.Mutable = true
 }

@@ -2,6 +2,7 @@ package graph_engine_go
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -67,6 +68,7 @@ func (ctx *GraphContext) NameDepend(name string) *GraphDep {
 	}
 	// 创建依赖数据结构
 	graphDep := new(GraphDep)
+	graphDep.Name = name
 	graphDep.RefGraphData = ctx.allGraphData[name]
 	ctx.allGraphDep[name] = graphDep
 	return graphDep
@@ -253,6 +255,15 @@ func (ctx *GraphContext) setup() error {
 		if err != nil {
 			fmt.Printf("failed to setup node '%s'", name)
 			return err
+		}
+	}
+	// 检查mutable依赖是否唯一， 不唯一则报错
+	for dataName, nodeNames := range ctx.dataForNodeMap {
+		if ctx.allGraphData[dataName].Mutable {
+			if len(nodeNames) > 1 {
+				nodeNameStr := strings.Join(nodeNames[:], ",")
+				panic(fmt.Errorf("not allow >1 nodes depend mutable GraphData[%s] in Nodes %s", dataName, nodeNameStr))
+			}
 		}
 	}
 	return nil

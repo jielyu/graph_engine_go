@@ -64,9 +64,20 @@
         },
         {
             "name": "node_6",
+            "type": "AddOp",
+            "depends": {
+                "A": "a",
+                "B": "g"
+            },
+            "emitters": {
+                "C": "h"
+            }
+        },
+        {
+            "name": "node_7",
             "type": "PrinterOp",
             "depends": {
-                "A": "g"
+                "A": "h"
             }
         }
     ]

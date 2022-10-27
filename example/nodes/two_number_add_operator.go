@@ -21,6 +21,7 @@ func (g *AddOp) SetConfig(config *ge.GraphNodeConfig) error {
 func (g *AddOp) SetUp(ctx *ge.GraphContext) error {
 	g.a = ge.GetGraphDependByName(ctx, g.Config, "A")
 	g.b = ge.GetGraphDependByName(ctx, g.Config, "B")
+	// g.a.SetMutable() // 由于"a"被两个节点依赖，因此设置为mutable时会报错
 	g.c = ge.GetGraphDataByName(ctx, g.Config, "C")
 	fmt.Printf("compute: setup '%s' node '%s' succ.%p\r\n", g.Config.NodeType, g.Config.Name, g.Config)
 	return nil
