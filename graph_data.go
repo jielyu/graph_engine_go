@@ -31,6 +31,7 @@ func Emit[T any](gdata *GraphData) *T {
 		panic(fmt.Errorf("current emitter type '%s' different from history type '%s'",
 			typeTName, gdata.TypeName))
 	}
+	gdata.Active = true
 	return (gdata.Data).(*T)
 }
 
@@ -43,6 +44,7 @@ func EmitDep[T any](gdata *GraphData, gdep *GraphDep) *T {
 	}
 	gdata.TypeName = gdep.RefGraphData.TypeName
 	gdata.Data = gdep.RefGraphData.Data
+	gdata.Active = true
 	return gdata.Data.(*T)
 }
 
@@ -61,6 +63,9 @@ func Dep[T any](gdep *GraphDep) *T {
 	if typeTName != gdep.RefGraphData.TypeName {
 		panic(fmt.Errorf("depend type '%s' different from emitter type '%s'",
 			typeTName, gdep.RefGraphData.TypeName))
+	}
+	if !gdep.RefGraphData.Active {
+		panic(fmt.Errorf("GraphDep[%s] get inactive GraphData[%s], please check emitter", gdep.Name, gdep.RefGraphData.Name))
 	}
 	return gdep.RefGraphData.Data.(*T)
 }

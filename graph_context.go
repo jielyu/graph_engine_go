@@ -139,6 +139,10 @@ func (ctx *GraphContext) Process() error {
 	}
 	// 避免节点还没运行完就返回
 	wg.Wait()
+	// 清理数据激活状态
+	for _, gd := range ctx.allGraphData {
+		gd.Active = false
+	}
 	return nil
 }
 
