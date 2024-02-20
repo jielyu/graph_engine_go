@@ -37,11 +37,11 @@ func NewGraphEngine(jsonFile string) *GraphEngine {
 	return ge
 }
 
-var selectLocker sync.Mutex
+var poolMutex sync.Mutex
 
 func (ge *GraphEngine) selectIdleCtx() *GraphContext {
-	selectLocker.Lock()
-	defer selectLocker.Unlock()
+	poolMutex.Lock()
+	defer poolMutex.Unlock()
 	for _, v := range ge.contextPool {
 		if !v.Busy {
 			v.Busy = true

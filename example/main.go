@@ -13,7 +13,7 @@ var wg sync.WaitGroup
 func main() {
 	fmt.Println("welcome to graph_engine_go example")
 	ge := ge.NewGraphEngine("./config/main_graph.json")
-	times := 10
+	times := 1000
 	wg.Add(times)
 	for i := 0; i < times; i++ {
 		go func(reqId uint64) {

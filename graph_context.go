@@ -92,43 +92,115 @@ func (ctx *GraphContext) Build(graphConfig *GraphConfig) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println("dataForNodeMap", ctx.dataForNodeMap)
+	fmt.Println("nodeEmitMap", ctx.nodeEmitMap)
 	return nil
 }
 
+var nodeMutex sync.Mutex
+
 // 运行图结构
+// func (ctx *GraphContext) Process() error {
+// 	// 记录节点依赖情况
+// 	nodeState := make(map[string]*int32)
+// 	for _, name := range ctx.allNodes {
+// 		var stat int32 = int32(ctx.nodeDepMap[name].Cardinality())
+// 		nodeState[name] = &stat
+// 	}
+// 	// 创建Group同步
+// 	var wg sync.WaitGroup
+// 	wg.Add(len(nodeState))
+// 	// 使用切片记录所有就绪的节点
+// 	readyNode := make([]string, 0, len(nodeState))
+// 	for len(nodeState) > 0 {
+// 		// 查找准备就绪的节点
+// 		for k, v := range nodeState {
+// 			if *v == 0 {
+// 				delete(nodeState, k)
+// 				readyNode = append(readyNode, k)
+// 			}
+// 		}
+// 		// 运行准备就绪的节点
+// 		for _, name := range readyNode {
+// 			go func(nname string) {
+// 				// fmt.Println("process node ", nname)
+// 				op := ctx.graphNodes[nname]
+// 				op.Process(ctx)
+// 				// 更新所有依赖该节点的发布数据的节点状态
+// 				for v := range ctx.nodeEmitMap[nname].Iter() {
+// 					emitName := v.(string)
+// 					for _, nodeName := range ctx.dataForNodeMap[emitName] {
+// 						atomic.AddInt32(nodeState[nodeName], -1)
+// 					}
+// 				}
+// 				wg.Done()
+// 			}(name)
+// 		}
+// 		// 清空就绪列表
+// 		readyNode = readyNode[:0]
+// 		// 睡眠1ms，避免占用太多计算资源
+// 		time.Sleep(time.Duration(1) * time.Microsecond)
+// 	}
+// 	// 避免节点还没运行完就返回
+// 	wg.Wait()
+// 	// 清理数据激活状态
+// 	for _, gd := range ctx.allGraphData {
+// 		gd.Active = false
+// 	}
+// 	return nil
+// }
+
+func _countSyncMap(m *sync.Map) int32 {
+	var counter int32
+	m.Range(func(key, value interface{}) bool {
+		atomic.AddInt32(&counter, int32(1))
+		return true
+	})
+	return counter
+}
+
 func (ctx *GraphContext) Process() error {
 	// 记录节点依赖情况
-	nodeState := make(map[string]*int32)
+	nodeState := sync.Map{}
 	for _, name := range ctx.allNodes {
 		var stat int32 = int32(ctx.nodeDepMap[name].Cardinality())
-		nodeState[name] = &stat
+		nodeState.Store(name, stat)
 	}
 	// 创建Group同步
 	var wg sync.WaitGroup
-	wg.Add(len(nodeState))
+	wg.Add(len(ctx.allNodes))
 	// 使用切片记录所有就绪的节点
-	readyNode := make([]string, 0, len(nodeState))
-	for len(nodeState) > 0 {
+	readyNode := make([]string, 0, len(ctx.allNodes))
+	for _countSyncMap(&nodeState) > 0 {
 		// 查找准备就绪的节点
-		for k, v := range nodeState {
-			if *v == 0 {
-				delete(nodeState, k)
-				readyNode = append(readyNode, k)
+		nodeState.Range(func(key, value interface{}) bool {
+			if value.(int32) == 0 {
+				nodeName := key.(string)
+				nodeState.Delete(nodeName)
+				readyNode = append(readyNode, nodeName)
 			}
-		}
+			return true
+		})
 		// 运行准备就绪的节点
 		for _, name := range readyNode {
 			go func(nname string) {
-				// fmt.Println("process node ", nname)
+				// fmt.Println("req_id:", ctx.ReqId, " process node ", nname)
 				op := ctx.graphNodes[nname]
 				op.Process(ctx)
 				// 更新所有依赖该节点的发布数据的节点状态
 				for v := range ctx.nodeEmitMap[nname].Iter() {
 					emitName := v.(string)
 					for _, nodeName := range ctx.dataForNodeMap[emitName] {
-						atomic.AddInt32(nodeState[nodeName], -1)
+						nodeMutex.Lock()
+						cnt, _ := nodeState.Load(nodeName)
+						nodeState.Store(nodeName, cnt.(int32) - 1)
+						nodeMutex.Unlock()
 					}
 				}
+				// nodeState.Range(func(key, value interface{}) bool {
+				// 	fmt.Println("state", ctx.ReqId, nname, key.(string), value.(int32))
+				// 	return true
+				// })
 				wg.Done()
 			}(name)
 		}
@@ -136,6 +208,12 @@ func (ctx *GraphContext) Process() error {
 		readyNode = readyNode[:0]
 		// 睡眠1ms，避免占用太多计算资源
 		time.Sleep(time.Duration(1) * time.Microsecond)
+
+		// fmt.Println("debug", readyNode)
+		// nodeState.Range(func(key, value interface{}) bool {
+		// 	fmt.Println(ctx.ReqId, " node ", key.(string), " value ", value.(int32))
+		// 	return true
+		// })
 	}
 	// 避免节点还没运行完就返回
 	wg.Wait()
