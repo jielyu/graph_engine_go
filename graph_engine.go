@@ -37,14 +37,8 @@ func NewGraphEngine(jsonFile string) *GraphEngine {
 	return ge
 }
 
-func (ge *GraphEngine) Release() {
-	for _, ctx := range ge.contextPool {
-		ctx.Release()
-	}
-}
-
 var poolMutex sync.Mutex
-
+/// 内部函数：选择空闲的GraphContext
 func (ge *GraphEngine) selectIdleCtx() *GraphContext {
 	poolMutex.Lock()
 	defer poolMutex.Unlock()
@@ -78,4 +72,11 @@ func (ge *GraphEngine) Process(inputData interface{}, reqId uint64) (interface{}
 	err := ctx.Process()
 	// fmt.Printf("ctx %d run finished.addr:%p\r\n", ctx.Id, ctx)
 	return ctx.OutputData, err
+}
+
+/// 释放资源
+func (ge *GraphEngine) Release() {
+	for _, ctx := range ge.contextPool {
+		ctx.Release()
+	}
 }

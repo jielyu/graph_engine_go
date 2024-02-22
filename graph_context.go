@@ -104,12 +104,7 @@ func (ctx *GraphContext) Build(graphConfig *GraphConfig) error {
 	return nil
 }
 
-/// 释放资源
-func (ctx *GraphContext) Release() {
-	ctx.routinePool.Release()
-}
-
-/// 私有函数：检查节点依赖的状态是否ready
+/// 内部函数：检查节点依赖的状态是否ready
 func (ctx *GraphContext) check_node_deps(name string) bool {
 	var depNameSet = ctx.nodeDepMap[name]
 	for depName := range depNameSet.Iter() {
@@ -171,7 +166,12 @@ func (ctx *GraphContext) Process() error {
 	return nil
 }
 
-// 构建各个节点
+/// 释放资源
+func (ctx *GraphContext) Release() {
+	ctx.routinePool.Release()
+}
+
+// 内部函数：构建各个节点
 func (ctx *GraphContext) create(graphConfig *GraphConfig) error {
 	ctx.graphConfig = graphConfig
 	// 创建所有节点
@@ -277,7 +277,7 @@ func (ctx *GraphContext) create(graphConfig *GraphConfig) error {
 	return nil
 }
 
-// 调用每一个node的SetUp函数
+// 内部函数：调用每一个node的SetUp函数
 func (ctx *GraphContext) setup() error {
 	for _, name := range ctx.allNodes {
 		// fmt.Printf("start to setup node '%s'\r\n", name)
@@ -363,7 +363,7 @@ func (ctx *GraphContext) setup() error {
 	return nil
 }
 
-// 调用每一个node的Initialize函数
+// 内部函数：调用每一个node的Initialize函数
 func (ctx *GraphContext) initailize() error {
 	for _, name := range ctx.allNodes {
 		err := ctx.graphNodes[name].Initailize(ctx)
