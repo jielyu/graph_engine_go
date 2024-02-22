@@ -37,6 +37,12 @@ func NewGraphEngine(jsonFile string) *GraphEngine {
 	return ge
 }
 
+func (ge *GraphEngine) Release() {
+	for _, ctx := range ge.contextPool {
+		ctx.Release()
+	}
+}
+
 var poolMutex sync.Mutex
 
 func (ge *GraphEngine) selectIdleCtx() *GraphContext {

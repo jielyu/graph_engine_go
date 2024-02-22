@@ -8,6 +8,7 @@ import (
 	"time"
 
 	mapset "github.com/deckarep/golang-set"
+	ants "github.com/panjf2000/ants/v2"
 )
 
 type GraphContext struct {
@@ -23,6 +24,7 @@ type GraphContext struct {
 	allGraphDep    map[string]*GraphDep     // 存储所有依赖的数据结构
 	dataByNodeMap  map[string]string        // 用于存储发布数据与发布节点之间的映射
 	dataForNodeMap map[string][]string      // 用于存储发布的数据与依赖该数据的节点之间的映射
+	routinePool    *ants.Pool               // 协程池，用于控制线程数，避免过度占用资源
 	InputData      interface{}
 	OutputData     interface{}
 	Busy           bool   // ctx是否处于繁忙的标志
@@ -91,9 +93,20 @@ func (ctx *GraphContext) Build(graphConfig *GraphConfig) error {
 	if err != nil {
 		return err
 	}
+	// 创建协程池
+	numThreads := graphConfig.NumThreads
+    if numThreads < 1 {
+		numThreads = 1
+	}
+	ctx.routinePool, _ = ants.NewPool(numThreads)
 	fmt.Println("dataForNodeMap", ctx.dataForNodeMap)
 	fmt.Println("nodeEmitMap", ctx.nodeEmitMap)
 	return nil
+}
+
+/// 释放资源
+func (ctx *GraphContext) Release() {
+	ctx.routinePool.Release()
 }
 
 /// 私有函数：检查节点依赖的状态是否ready
@@ -125,25 +138,28 @@ func (ctx *GraphContext) Process() error {
 	readyNode := make([]string, 0, len(ctx.allNodes))
 	for len(waitingNodes) > 0 {
 		// 查找准备就绪的节点
-		for node_name := range(waitingNodes) {
-			if ctx.check_node_deps(node_name) == true {
-				delete(waitingNodes, node_name)
-				readyNode = append(readyNode, node_name)
+		for nodeName := range(waitingNodes) {
+			if ctx.check_node_deps(nodeName) == true {
+				delete(waitingNodes, nodeName)
+				readyNode = append(readyNode, nodeName)
 			}
 		}
 		// 运行准备就绪的节点
-		for _, name := range readyNode {
-			go func(nname string) {
-				defer wg.Done()
-				// fmt.Println("req_id:", ctx.ReqId, " process node ", nname)
-				op := ctx.graphNodes[nname]
-				op.Process(ctx)
-				// 更新所有依赖该节点的发布数据的节点状态
-				for v := range ctx.nodeEmitMap[nname].Iter() {
-					emitName := v.(string)
-					ctx.allGraphData[emitName].Active = true
+		for _, nodeName := range readyNode {
+			taskFunc := func(nname string) func() {
+				return func() {
+					defer wg.Done()
+					// fmt.Println("req_id:", ctx.ReqId, " process node ", nname)
+					op := ctx.graphNodes[nname]
+					op.Process(ctx)
+					// 更新所有依赖该节点的发布数据的节点状态
+					for v := range ctx.nodeEmitMap[nname].Iter() {
+						emitName := v.(string)
+						ctx.allGraphData[emitName].Active = true
+					}
 				}
-			}(name)
+			}
+			ctx.routinePool.Submit(taskFunc(nodeName))
 		}
 		// 清空就绪列表
 		readyNode = readyNode[:0]

@@ -23,4 +23,5 @@ func main() {
 		}(uint64(i))
 	}
 	wg.Wait()
+	ge.Release()
 }
